@@ -20,13 +20,14 @@ hostname -I
 echo
 echo Install PHP
 echo 
-sudo apt install php -y
+sudo apt install phpmyadmin -y
 sudo rm index.html
 
 echo
 echo index.php erstellen und initieren
 echo 
-echo "<?php echo "hello world"; ?>" > index.php
+sudo touch index.php
+sudo echo "<?php echo "hello world"; ?>" > index.php
 
 sudo service apache2 restart
 
