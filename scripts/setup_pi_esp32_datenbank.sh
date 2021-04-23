@@ -42,7 +42,7 @@ sudo apt install phpmyadmin -y
 sudo phpenmod mysqli
 sudo service apache2 restart
 
-if [!-d /var/www/html/phpmyadmin]; then
+if [ ! -d /var/www/html/phpmyadmin ]; then
     sudo ln -s /usr/share/phpmyadmin /var/www/html/phpmyadmin
 fi;
 
