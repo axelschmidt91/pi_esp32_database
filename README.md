@@ -15,3 +15,14 @@ Leere Datei ```ssh``` in boot ablegen um ssh zu aktivieren.
 
 Ausführen:
 ```sudo apt update && sudo apt install git```
+
+Ausführen des scripts setup_pi
+
+Anlegen eines mysql user:
+```
+pi@raspberrypi:/var/www/html $ sudo mysql --user=root --password
+> create user pi@localhost identified by 'your_password';
+> grant all privileges on *.* to pi@localhost;
+> FLUSH PRIVILEGES;
+> exit;
+> ```
