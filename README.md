@@ -1,5 +1,8 @@
 # pi_esp32_database
 
+https://randomnerdtutorials.com/esp32-esp8266-raspberry-pi-lamp-server/
+
+
 ## Pi
 Rasbian mit neuer Datei ```wpa_supplicant.conf```:
 ```
@@ -18,11 +21,14 @@ Ausführen:
 
 Ausführen des scripts setup_pi
 
-Anlegen eines mysql user:
+Ausführen des scripts setup_database
+
+Kopieren der ```post-esp-data.php``` und ändern des Passworts:
 ```
-pi@raspberrypi:/var/www/html $ sudo mysql --user=root --password
-> create user pi@localhost identified by 'your_password';
-> grant all privileges on *.* to pi@localhost;
-> FLUSH PRIVILEGES;
-> exit;
-> ```
+sudo cp post-esp-data.php /var/www/html/post-esp-data.php
+```
+
+Kopieren der ```esp-data.php``` und ändern des Passwors:
+```
+sudo cp esp-data.php /var/www/html/esp-data.php
+```
