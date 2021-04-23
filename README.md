@@ -12,3 +12,6 @@ psk="Passwort"
 }
 ```
 Leere Datei ```ssh``` in boot ablegen um ssh zu aktivieren.
+
+Ausführen:
+```sudo apt update && sudo apt install git```
