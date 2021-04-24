@@ -24,7 +24,7 @@ $password = "REPLACE_WITH_YOUR_PASSWORD";
 // If you change this value, the ESP32 sketch needs to match
 $api_key_value = "tPmAT5Ab3j7F9";
 
-$api_key= $sensor = $location = $value = $unit "";
+$api_key= $sensor = $location = $value = $unit = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $api_key = test_input($_POST["api_key"]);
@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } 
         
         $sql = "INSERT INTO SensorData (sensor, location, value, unit)
-        VALUES ('" . $sensor . "', '" . $location . "', '" . $value . "', '" . $unit . "');
+        VALUES ('" . $sensor . "', '" . $location . "', '" . $value . "', '" . $unit . "')";
 	
 
         
