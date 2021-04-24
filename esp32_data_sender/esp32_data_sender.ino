@@ -36,8 +36,10 @@ const char* serverName = "http://192.168.0.110/post-esp-data.php";
 // If you change the apiKeyValue value, the PHP file /post-esp-data.php also needs to have the same key 
 String apiKeyValue = "tPmAT5Ab3j7F9";
 
-String sensorLocation = "Office";
-int requestFrequency = 30000; //ms
+String sensorLocation = "Garten";
+int period = 10000; //ms
+
+unsigned long time_now = 0;
 
 /*#include <SPI.h>
 #define BME_SCK 18
@@ -90,12 +92,13 @@ void setup() {
 }
 
 void loop() {
-  httpRequest("Temperature");
-  httpRequest("Pressure");
-  httpRequest("Light");
-  
- //Send an HTTP POST request every 30 seconds
-  delay(requestFrequency);  
+  if(abs(millis() - time_now) >= period){
+    time_now += period;
+    
+    httpRequest("Temperature");
+    httpRequest("Pressure");
+    httpRequest("Light");
+    } 
 }
 
 
