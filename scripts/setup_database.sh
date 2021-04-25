@@ -3,7 +3,7 @@
 if [ $1 -eq 0 ]
   then
     echo "No password for user pi provided"
-    break
+    exit 0
 fi
 
 echo Create database user pi
