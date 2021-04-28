@@ -36,7 +36,7 @@ const char* serverName = "http://192.168.0.110/post-esp-data.php";
 // If you change the apiKeyValue value, the PHP file /post-esp-data.php also needs to have the same key 
 String apiKeyValue = "tPmAT5Ab3j7F9";
 
-String sensorLocation = "Garten";
+String sensorLocation = "Flur";
 int period = 10000; //ms
 
 unsigned long time_now = 0;
@@ -54,6 +54,8 @@ BH1750 lightMeter;
 
 //Adafruit_BMP280 bme(BME_CS);  // hardware SPI
 //Adafruit_BMP280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);  // software SPI
+
+const int mikrofon A0;
 
 void setup() {
   Serial.begin(115200);
@@ -98,6 +100,7 @@ void loop() {
     httpRequest("Temperature");
     httpRequest("Pressure");
     httpRequest("Light");
+    httpRequest("Volume");
     } 
 }
 
@@ -115,19 +118,20 @@ void httpRequest(String meassurement) {
     
     // Prepare your HTTP POST request data
     String httpRequestData = "api_key=" + apiKeyValue + "&sensor=" + meassurement + "&location=" + sensorLocation;
-
+    Serial.println("httpRequest for: " + meassurement);
+    
     // Choose Sensor
     if (meassurement == "Temperature") {
-      Serial.println("httpRequest for: " + meassurement);
       httpRequestData = httpRequestData + "&value=" + String(bmp.readTemperature()) + "&unit=C";
       }
     if (meassurement == "Pressure") {
-      Serial.println("httpRequest for: " + meassurement);
       httpRequestData = httpRequestData + "&value=" + String(bmp.readPressure()) + "&unit=Pa";
       }
     if (meassurement == "Light") {
-      Serial.println("httpRequest for: " + meassurement);
       httpRequestData = httpRequestData + "&value=" + String(lightMeter.readLightLevel()) + "&unit=lx";
+      }
+    if (meassurement == "Volume") {
+      httpRequestData = httpRequestData + "&value=" + String(analogRead(mikrofon)) + "&unit=??";
       }
 
     Serial.print("httpRequestData: ");
