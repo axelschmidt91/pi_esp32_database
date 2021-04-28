@@ -56,10 +56,7 @@ BH1750 lightMeter;
 //Adafruit_BMP280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);  // software SPI
 
 // Volume 
-const int mikrofon = A0;
-const int samples = 10;
-const int boundary = 20;
-float running_average;
+const int sound_digital = 4;
 int volume_exceed_count = 0;
 
 void setup() {
@@ -96,8 +93,7 @@ void setup() {
     while (1);
   }
   Serial.println("START Volume meassurement");
-  pinMode(mikrofon, INPUT);
-  running_average = analogRead(mikrofon);
+  pinMode(sound_digital, INPUT);
   
 }
 
@@ -181,15 +177,8 @@ void httpRequest(String meassurement) {
 }
 
 void volume() {
-  
-  int lautstaerke = analogRead(mikrofon);
-  running_average = ((samples-1) * running_average + lautstaerke ) / samples; 
-  lautstaerke = lautstaerke - running_average;
-  
-  if (abs(lautstaerke) >= boundary) {
+  if (digitalRead(sound_digital) == HIGH) {
     volume_exceed_count++;
     }
-
-  Serial.println("Lautstärke: " + String(lautstaerke) + " Uper bound: " + String(boundary) + " Lower bound: " + String(-boundary) + " count: " + String(volume_exceed_count));
- 
+  Serial.println("count: " + String(volume_exceed_count));
   }
