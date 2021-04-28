@@ -23,11 +23,11 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #include <BH1750.h>
-
+#include "credentials.h"
 
 // Replace with your network credentials
-const char* ssid     = "YOUR_WLAN_NAME";
-const char* password = "YOUR_WLAN_PASSWORD";
+const char* ssid     = "WIFI_SSID";
+const char* password = "WIFI_PW";
 
 // REPLACE with your Domain name and URL path or IP address with path
 const char* serverName = "http://192.168.0.110/post-esp-data.php";
