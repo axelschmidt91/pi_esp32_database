@@ -55,7 +55,12 @@ BH1750 lightMeter;
 //Adafruit_BMP280 bme(BME_CS);  // hardware SPI
 //Adafruit_BMP280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);  // software SPI
 
-const int mikrofon A0;
+// Volume 
+const int mikrofon = A0;
+const int samples = 10;
+const int boundary = 20;
+float running_average;
+int volume_exceed_count = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -90,10 +95,16 @@ void setup() {
     Serial.println("Could not find a valid BH1750 sensor, check wiring or change I2C address!");
     while (1);
   }
+  Serial.println("START Volume meassurement");
+  pinMode(mikrofon, INPUT);
+  running_average = analogRead(mikrofon);
   
 }
 
 void loop() {
+
+  volume();
+  
   if(abs(millis() - time_now) >= period){
     time_now += period;
     
@@ -131,7 +142,8 @@ void httpRequest(String meassurement) {
       httpRequestData = httpRequestData + "&value=" + String(lightMeter.readLightLevel()) + "&unit=lx";
       }
     if (meassurement == "Volume") {
-      httpRequestData = httpRequestData + "&value=" + String(analogRead(mikrofon)) + "&unit=??";
+      httpRequestData = httpRequestData + "&value=" + String(volume_exceed_count) + "&unit=#";
+      volume_exceed_count = 0;
       }
 
     Serial.print("httpRequestData: ");
@@ -167,3 +179,17 @@ void httpRequest(String meassurement) {
     Serial.println("WiFi Disconnected");
   }
 }
+
+void volume() {
+  
+  int lautstaerke = analogRead(mikrofon);
+  running_average = ((samples-1) * running_average + lautstaerke ) / samples; 
+  lautstaerke = lautstaerke - running_average;
+  
+  if (abs(lautstaerke) >= boundary) {
+    volume_exceed_count++;
+    }
+
+  Serial.println("Lautstärke: " + String(lautstaerke) + " Uper bound: " + String(boundary) + " Lower bound: " + String(-boundary) + " count: " + String(volume_exceed_count));
+ 
+  }
