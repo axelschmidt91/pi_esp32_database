@@ -20,44 +20,69 @@
 #endif
 
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BMP280.h>
-#include <BH1750.h>
 #include "credentials.h"
 
 // Replace with your network credentials
-const char* ssid     = "WIFI_SSID";
-const char* password = "WIFI_PW";
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PW;
 
 // REPLACE with your Domain name and URL path or IP address with path
 const char* serverName = "http://192.168.0.110/post-esp-data.php";
 
 // Keep this API Key value to be compatible with the PHP code provided in the project page. 
 // If you change the apiKeyValue value, the PHP file /post-esp-data.php also needs to have the same key 
-String apiKeyValue = "tPmAT5Ab3j7F9";
+String apiKeyValue = API_KEY;
 
 String sensorLocation = "Flur";
 int period = 10000; //ms
 
+//#define DEBUG
+
+// Used Sensors
+//#define BH1750_SENSOR // Light Intensity
+#define BMP280_SENSOR // Temperatur, Pressure
+#define KY038_SENSOR // Sound
+
+
+ // Initation 
 unsigned long time_now = 0;
 
-/*#include <SPI.h>
-#define BME_SCK 18
-#define BME_MISO 19
-#define BME_MOSI 23
-#define BME_CS 5*/
+#ifdef BH1750_SENSOR 
+  
+  #include <BH1750.h>
+  BH1750 lightMeter;
 
-#define SEALEVELPRESSURE_HPA (1013.25)
+#endif
 
-Adafruit_BMP280 bmp;  // I2C
-BH1750 lightMeter;
+#ifdef BMP280_SENSOR 
 
-//Adafruit_BMP280 bme(BME_CS);  // hardware SPI
-//Adafruit_BMP280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);  // software SPI
+  #include <Adafruit_Sensor.h>
+  #include <Adafruit_BMP280.h>
+  #define BMP280_ADDR 0x76
+  
+  /*#include <SPI.h>
+  #define BME_SCK 18
+  #define BME_MISO 19
+  #define BME_MOSI 23
+  #define BME_CS 5*/
+  
+  #define SEALEVELPRESSURE_HPA (1013.25)
+  
+  Adafruit_BMP280 bmp;  // I2C
+  
+  //Adafruit_BMP280 bme(BME_CS);  // hardware SPI
+  //Adafruit_BMP280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);  // software SPI
+  
+#endif
 
-// Volume 
-const int sound_digital = 4;
-int volume_exceed_count = 0;
+#ifdef KY038_SENSOR 
+
+  // Volume 
+  const int sound_digital = 4;
+  int volume_exceed_count = 0;
+
+#endif
+
 
 void setup() {
   Serial.begin(115200);
@@ -72,42 +97,57 @@ void setup() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  // BMP280
-  // (you can also pass in a Wire library object like &Wire2)
-  Serial.println("START BMP280");
-  bool statusBMP = bmp.begin(0x76);
-  if (!statusBMP) {
-    Serial.println("Could not find a valid BME280 sensor, check wiring or change I2C address!");
-    while (1);
-  }
 
-  // BH1750
-  // Initialize the I2C bus (BH1750 library doesn't do this automatically)
-  Wire.begin();
-  // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
-  // For Wemos / Lolin D1 Mini Pro and the Ambient Light shield use Wire.begin(D2, D1);
-  Serial.println("START BH1750");
-  bool statusBH1750 = lightMeter.begin();
-  if (!statusBH1750) {
-    Serial.println("Could not find a valid BH1750 sensor, check wiring or change I2C address!");
-    while (1);
-  }
-  Serial.println("START Volume meassurement");
-  pinMode(sound_digital, INPUT);
+  #ifdef BMP280_SENSOR
+    // BMP280
+    // (you can also pass in a Wire library object like &Wire2)
+    Serial.println("START BMP280");
+    bool statusBMP = bmp.begin(BMP280_ADDR);
+    if (!statusBMP) {
+      Serial.println("Could not find a valid BMP280 sensor, check wiring or change I2C address!");
+      while (1);
+    }
+  #endif
+
+  #ifdef BH1750_SENSOR
+    // BH1750
+    // Initialize the I2C bus (BH1750 library doesn't do this automatically)
+    Wire.begin();
+    // On esp8266 you can select SCL and SDA pins using Wire.begin(D4, D3);
+    // For Wemos / Lolin D1 Mini Pro and the Ambient Light shield use Wire.begin(D2, D1);
+    Serial.println("START BH1750");
+    bool statusBH1750 = lightMeter.begin();
+    if (!statusBH1750) {
+      Serial.println("Could not find a valid BH1750 sensor, check wiring or change I2C address!");
+      while (1);
+    }
+  #endif
+
+  #ifdef KY038_SENSOR
+    Serial.println("START KY-038");
+    pinMode(sound_digital, INPUT);
+  #endif
   
 }
 
 void loop() {
 
-  volume();
+  #ifdef KY038_SENSOR
+    volume();
+  #endif
   
   if(abs(millis() - time_now) >= period){
     time_now += period;
-    
-    httpRequest("Temperature");
-    httpRequest("Pressure");
-    httpRequest("Light");
-    httpRequest("Volume");
+    #ifdef BMP280_SENSOR
+      httpRequest("Temperature");
+      httpRequest("Pressure");
+    #endif
+    #ifdef BH1750_SENSOR
+      httpRequest("Light");
+    #endif
+    #ifdef KY038_SENSOR
+      httpRequest("Volume");
+    #endif
     } 
 }
 
@@ -128,19 +168,25 @@ void httpRequest(String meassurement) {
     Serial.println("httpRequest for: " + meassurement);
     
     // Choose Sensor
-    if (meassurement == "Temperature") {
-      httpRequestData = httpRequestData + "&value=" + String(bmp.readTemperature()) + "&unit=C";
-      }
-    if (meassurement == "Pressure") {
-      httpRequestData = httpRequestData + "&value=" + String(bmp.readPressure()) + "&unit=Pa";
-      }
-    if (meassurement == "Light") {
-      httpRequestData = httpRequestData + "&value=" + String(lightMeter.readLightLevel()) + "&unit=lx";
-      }
-    if (meassurement == "Volume") {
-      httpRequestData = httpRequestData + "&value=" + String(volume_exceed_count) + "&unit=#";
-      volume_exceed_count = 0;
-      }
+    #ifdef BMP280_SENSOR
+      if (meassurement == "Temperature") {
+        httpRequestData = httpRequestData + "&value=" + String(bmp.readTemperature()) + "&unit=C";
+        }
+      if (meassurement == "Pressure") {
+        httpRequestData = httpRequestData + "&value=" + String(bmp.readPressure()) + "&unit=Pa";
+        }
+    #endif
+    #ifdef BH1750_SENSOR
+      if (meassurement == "Light") {
+        httpRequestData = httpRequestData + "&value=" + String(lightMeter.readLightLevel()) + "&unit=lx";
+        }
+    #endif
+    #ifdef KY038_SENSOR
+      if (meassurement == "Volume") {
+        httpRequestData = httpRequestData + "&value=" + String(volume_exceed_count) + "&unit=#";
+        volume_exceed_count = 0;
+        }
+    #endif
 
     Serial.print("httpRequestData: ");
     Serial.println(httpRequestData);
@@ -176,9 +222,13 @@ void httpRequest(String meassurement) {
   }
 }
 
-void volume() {
-  if (digitalRead(sound_digital) == HIGH) {
-    volume_exceed_count++;
+#ifdef KY038_SENSOR
+  void volume() {
+    if (digitalRead(sound_digital) == HIGH) {
+      volume_exceed_count++;
+      }
+    #ifdef DEBUG
+      Serial.println("count: " + String(volume_exceed_count));
+    #endif
     }
-  Serial.println("count: " + String(volume_exceed_count));
-  }
+#endif
