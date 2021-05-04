@@ -33,7 +33,7 @@ const char* serverName = "http://192.168.0.110/post-esp-data.php";
 // If you change the apiKeyValue value, the PHP file /post-esp-data.php also needs to have the same key 
 String apiKeyValue = API_KEY;
 
-String sensorLocation = "Flur";
+String sensorLocation = "Wohnzimmer";
 int period = 10000; //ms
 
 //#define DEBUG
@@ -41,7 +41,8 @@ int period = 10000; //ms
 // Used Sensors
 //#define BH1750_SENSOR // Light Intensity
 #define BMP280_SENSOR // Temperatur, Pressure
-#define KY038_SENSOR // Sound
+//#define KY038_SENSOR // Sound
+#define CCS811_SENSOR // eCO2, VOC
 
 
  // Initation 
@@ -81,6 +82,18 @@ unsigned long time_now = 0;
   const int sound_digital = 4;
   int volume_exceed_count = 0;
 
+#endif
+
+#ifdef CCS811_SENSOR
+
+  // Connect WAKE to GND!
+
+  #include "Adafruit_CCS811.h"
+  Adafruit_CCS811 ccs;
+  
+  int waittime_sensor_warm_up =20*60*1000; // 20 min in ms; wait to warm up
+  bool write_data = false;
+  
 #endif
 
 
@@ -127,6 +140,23 @@ void setup() {
     Serial.println("START KY-038");
     pinMode(sound_digital, INPUT);
   #endif
+
+  #ifdef CCS811_SENSOR
+
+    Serial.println("START CCS811");
+
+    if(!ccs.begin()){
+    Serial.println("Failed to start sensor! Please check your wiring.");
+    while(1);
+    }
+     
+    //calibrate temperature sensor
+    while(!ccs.available());
+    float temp = ccs.calculateTemperature();
+    ccs.setTempOffset(temp - 25.0);
+    // ccs.setDriveMode(uint8_t 1); // mode 1: every 1s; mode 2: every 10s
+  
+  #endif
   
 }
 
@@ -148,6 +178,14 @@ void loop() {
     #ifdef KY038_SENSOR
       httpRequest("Volume");
     #endif
+    #ifdef CCS811_SENSOR
+      if (ccs.available()) {
+          if (!ccs.readData()) {
+            httpRequest("eCO2");
+            httpRequest("TVOC");
+          }}
+    #endif
+    
     } 
 }
 
@@ -187,9 +225,30 @@ void httpRequest(String meassurement) {
         volume_exceed_count = 0;
         }
     #endif
-
+    #ifdef CCS811_SENSOR
+      if (!write_data) {
+        if(millis() >= waittime_sensor_warm_up) {
+          write_data=true;
+          }
+        }
+      if (meassurement == "eCO2") {
+        httpRequestData = httpRequestData + "&value=" + String(ccs.geteCO2()) + "&unit=ppm";
+        }
+      if (meassurement == "TVOC") {
+        httpRequestData = httpRequestData + "&value=" + String(ccs.getTVOC()) + "&unit=ppm";
+        }
+        
+      if (!write_data) {
+        Serial.print("httpRequestData: ");
+        Serial.println(httpRequestData);
+        Serial.println("waited time: " + String(float(millis())/1000/60, 2) + " min of " + String(float(waittime_sensor_warm_up)/1000/60, 2) + " min. write_data=" + String(write_data));
+        httpRequestData="";
+      }
+    #endif
+    
     Serial.print("httpRequestData: ");
     Serial.println(httpRequestData);
+
     
     // You can comment the httpRequestData variable above
     // then, use the httpRequestData variable below (for testing purposes without the BME280 sensor)
