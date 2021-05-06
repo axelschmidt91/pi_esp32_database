@@ -10,3 +10,5 @@ MAILTO=me@myself.com
 ```
 
  with ```crontab -e``` to the cron jobs to setup the "Cleanup" of rigged data and the "Sensor up" check of every ESP32 you define.
+
+set system-wide environment variable `MYSQL_USER=[your_user]` and `MYSQL_PW=[your_pw]` to define your password that is used to login to mysql 

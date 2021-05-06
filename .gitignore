@@ -1,2 +1,3 @@
 esp32_data_sender/credentials.h
 *.log
+*~
